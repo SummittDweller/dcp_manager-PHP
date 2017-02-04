@@ -1,0 +1,134 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: bazil
+ * Date: 10/19/15
+ * Time: 9:11 PM
+ */
+
+
+$charset = "UTF-8";
+header("Pragma: no-cache");
+header("Cache-Control: no-store");
+header("Content-Type: text/html; charset=".$charset);
+
+html_header( );
+
+$output = array( );
+
+echo "<p />The following rsync (copy) processes are still running on the system:<p/>";
+exec("rsync ".$_GET["file"]." ".$_GET["destination"], $output);
+foreach ($output as $line) { echo "<p>$line</p>"; }
+echo "----------------------------------";
+echo " End of List ";
+echo "----------------------------------";
+
+/*function to copy a file to desired destinion folder*
+function copy(){
+  echo "<p />The following rsync (copy) processes are still running on the system:<p/>";
+  exec("pgrep rsync | xargs -s 200 ps", $output);
+  foreach ($output as $line) { echo "<p>$line</p>"; }
+}*/
+
+//copy();
+
+function html_header($header="") {
+  global $charset;
+  echo "
+     <!DOCTYPE HTML PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">
+     <html xmlns=\"http://www.w3.org/1999/xhtml\">
+     <head>
+     <meta http-equiv=\"content-type\" content=\"text/html; charset=".$charset."\" />
+	<meta http-equiv=\"refresh\" content=\"5\">
+	<title>...:::: phpCPMonitor</title>
+     $header
+     </head> ";
+  return;
+}
+
+echo "bazil"." ".$_GET["destination"]." ".$_GET["file"];
+
+
+
+// More below from run.php
+
+// Open the commands script
+if ($lines = file($path, FILE_IGNORE_NEW_LINES)) {
+
+echo "<div>Commands yet to be executed include:<br/>";
+  foreach ($lines as $line) {
+  echo "<div style='margin-left:1em;'>Executing: $line</div>";
+  // shell_exec($lines[0]."> /dev/null 2>/dev/null &");
+  // pclose(popen($line . ' &', 'r'));
+  }
+
+  // The following code modified from http://stackoverflow.com/questions/22721063/jquery-update-div-with-rsync-progress
+
+  // $down = popen('rsyncd -Pav http://ipv4.download.thinkbroadband.com/1GB.zip 1GB.zip', 'r');
+  if (!$down = popen($lines[0], 'r')) {
+  echo "<div class='error-message'>The following command failed: $lines[0].</div>";
+  } else {
+  $order = array("\r\n", "\n", "\r");
+
+  while ($progress = fgets($down, 32)) {
+  ob_flush();
+  flush();
+  $update = str_replace($order, '<br />', $progress);
+  echo $update; // <-- this outputs fine.
+
+  ?>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      var update = "<?php echo $update; ?>";
+      $("#status").html(update);
+    });
+  </script>
+  <?php
+
+  ob_flush();
+  flush();
+  }
+  pclose($down);
+  }
+
+  // End of imported code.
+
+
+
+  /*
+  // Execute the first command with output to the screen, then delete it
+  shell_exec($lines[0]."> /dev/null 2>/dev/null &");
+
+  //var_dump($out);
+  //if (0 === $status) {
+    unset($lines[0]);
+  //} else {
+  //  echo "<div class='error-message'>Command '$lines[0]' failed with status: $status.</div>";
+  //}
+
+  // Build the remaining commands back into script form and save them.
+  $data = implode('\n', array_values($lines)); */
+
+  // unlink($path);
+  /*
+  $file = fopen($path);
+  fwrite($file, $data);
+  fclose($file); */
+
+  } else {   // No commands remain
+    echo "<div>No commands remain in '$path'.  All processing is complete.</div>";
+  }
+  ?>
+
+</div>
+
+</body>
+</html>
+
+
+<?php
+//  sleep(5);
+//  http_redirect('http://localhost/dcp_manager/phpCPMonitor.php');
+?>
+
+
